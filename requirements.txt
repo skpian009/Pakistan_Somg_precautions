@@ -1,0 +1,7 @@
+treamlit
+oauth2client
+gspread
+plotly
+transformers
+torch
+sacremoses
