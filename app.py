@@ -7,20 +7,12 @@ from datetime import datetime
 
 
 
+
 import json
 import os
+import gspread
 from google.oauth2 import service_account
 import streamlit as st
-
-
-
-
-
-# Google Sheets setup
-scope = ["https://spreadsheets.google.com/feeds", 
-         "https://www.googleapis.com/auth/spreadsheets", 
-         "https://www.googleapis.com/auth/drive.file", 
-         "https://www.googleapis.com/auth/drive"]
 
 # Load the GCP credentials from the GitHub secret
 gcp_credentials_str = os.getenv("GCP_CREDENTIALS")
@@ -30,12 +22,19 @@ if gcp_credentials_str is None:
 else:
     # Parse the JSON string into a dictionary
     gcp_credentials = json.loads(gcp_credentials_str)
-
+    
     # Set up credentials using the JSON data
     creds = service_account.Credentials.from_service_account_info(gcp_credentials)
+    
+    # Initialize the Google Sheets client
+    client = gspread.authorize(creds)
+    
+    # Open the Google Sheet
+    sheet = client.open("Pakistan Smog Data").sheet1  # Replace with your Google Sheet name
 
-client = gspread.authorize(creds)
-sheet = client.open("Pakistan Smog Data").sheet1  # Your Google Sheet name
+    # Continue with the rest of your Streamlit app
+    st.write("Google Sheets integration is set up successfully.")
+
 
 # Streamlit App UI
 st.title("Smog Awareness and Precaution App")
