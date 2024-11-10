@@ -1,7 +1,5 @@
 streamlit
-oauth2client
 gspread
-plotly
-transformers
-torch
-sacremoses
+oauth2client
+matplotlib
+requests
