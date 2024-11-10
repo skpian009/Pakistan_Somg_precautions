@@ -1,0 +1,1 @@
+# Pakistan_Somg_precautions
