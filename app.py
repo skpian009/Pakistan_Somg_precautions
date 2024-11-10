@@ -5,6 +5,19 @@ from oauth2client.service_account import ServiceAccountCredentials
 import matplotlib.pyplot as plt
 from datetime import datetime
 
+
+# Load environment variables from .env if present
+load_dotenv()
+
+# Ensure GOOGLE_PRIVATE_KEY is present and replace line breaks
+private_key = os.getenv("GOOGLE_PRIVATE_KEY")
+if private_key is None:
+    st.error("GOOGLE_PRIVATE_KEY environment variable is not set.")
+else:
+    private_key = private_key.replace('\\n', '\n')
+
+
+
 # Set up credentials using environment variables
 credentials = {
     "type": os.getenv("GOOGLE_TYPE"),
