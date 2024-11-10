@@ -37,12 +37,10 @@ def get_health_advice(health_status):
     
     # Create a Groq chat completion request
     chat_completion = client.chat.completions.create(
-        messages=[
-            {
-                "role": "user",
-                "content": f"Provide health advice based on the following health status: {health_status}.",
-            }
-        ],
+        messages=[{
+            "role": "user",
+            "content": f"Provide health advice based on the following health status: {health_status}.",
+        }],
         model="llama3-8b-8192",
     )
 
@@ -69,13 +67,32 @@ if st.button("Submit Suggestion"):
     else:
         st.error("Please fill out your name and suggestion.")
 
-# Step 6: Data Visualization
-st.subheader("Health Impact Data")
-age_groups = ["Newborn", "Child", "Teen", "Adult", "Senior"]
-illness_data = [10, 20, 30, 40, 25]  # Sample data, adjust as per your collected data
+# Step 6: Data Visualization based on User Data
+
+# Initialize illness data for each age group
+illness_data = {"Newborn": 0, "Child": 0, "Teen": 0, "Adult": 0, "Senior": 0}
+
+# Map symptoms to corresponding age groups (this is just a sample logic, modify as needed)
+age_group_map = {
+    "0-1 (Newborn)": "Newborn",
+    "2-12 (Child)": "Child",
+    "13-19 (Teen)": "Teen",
+    "20-64 (Adult)": "Adult",
+    "65+ (Senior)": "Senior"
+}
+
+# Increase illness data count based on user age range and symptoms
+if age_range:
+    illness_data[age_group_map[age_range]] += len(health_status)
+
+# Create the bar chart based on user input
+st.subheader("Health Impact Data Based on Your Input")
+
+age_groups = list(illness_data.keys())
+illness_values = list(illness_data.values())
 
 fig, ax = plt.subplots()
-ax.bar(age_groups, illness_data, color=['blue', 'green', 'orange', 'red', 'purple'])
+ax.bar(age_groups, illness_values, color=['blue', 'green', 'orange', 'red', 'purple'])
 ax.set_xlabel("Age Group")
 ax.set_ylabel("Number of People Ill")
 ax.set_title("Health Impact by Age Group Due to Smog")
