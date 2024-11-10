@@ -1,85 +1,78 @@
-import os
 import streamlit as st
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
 import matplotlib.pyplot as plt
 from datetime import datetime
-
-
-
-
-import json
 import os
-import gspread
-from google.oauth2 import service_account
-import streamlit as st
+from dotenv import load_dotenv
+from groq import Groq
 
-# Load the GCP credentials from the GitHub secret
-gcp_credentials_str = os.getenv("GCP_CREDENTIALS")
+# Load environment variables from a .env file
+load_dotenv()
 
-if gcp_credentials_str is None:
-    st.error("GCP_CREDENTIALS environment variable is not set or accessible.")
-else:
-    # Parse the JSON string into a dictionary
-    gcp_credentials = json.loads(gcp_credentials_str)
-    
-    # Set up credentials using the JSON data
-    creds = service_account.Credentials.from_service_account_info(gcp_credentials)
-    
-    # Initialize the Google Sheets client
-    client = gspread.authorize(creds)
-    
-    # Open the Google Sheet
-    sheet = client.open("Pakistan Smog Data").sheet1  # Replace with your Google Sheet name
+# Access the API key from environment variables
+api_key = os.getenv("GROQ_API_KEY")
 
-    # Continue with the rest of your Streamlit app
-    st.write("Google Sheets integration is set up successfully.")
-
-
-# Streamlit App UI
+# Streamlit App
 st.title("Smog Awareness and Precaution App")
 st.markdown("## How You Can Help Reduce Smog\nReduce vehicle emissions, avoid burning waste, and opt for cleaner energy options to contribute to a healthier environment.")
 
-# User Information Input
+# Step 2: User Selection
 st.subheader("Personal Information")
 gender = st.selectbox("Select Gender", ["Male", "Female", "Other"])
-age_range = st.selectbox("Select Age Range", ["0-1 (Newborn)", "2-12 (Child)", "13-19 (Teen)", "20-64 (Adult)", "65+ (Senior)"])
+age_range = st.selectbox(
+    "Select Age Range",
+    ["0-1 (Newborn)", "2-12 (Child)", "13-19 (Teen)", "20-64 (Adult)", "65+ (Senior)"]
+)
 city = st.text_input("City")
 province = st.text_input("Province")
 
-# Health Status and Health Advice
+# Step 3: Health Status
 st.subheader("Current Health Status")
-health_status = st.multiselect("Select any symptoms you are experiencing:", ["Illness", "Not Well", "Pain", "Sore Throat", "Watery Eyes", "Cough", "Shortness of Breath", "Fatigue", "Headache", "Congestion"])
+health_status = st.multiselect("Select any symptoms you are experiencing:", 
+                               ["Illness", "Not Well", "Pain", "Sore Throat", "Watery Eyes", "Cough", 
+                                "Shortness of Breath", "Fatigue", "Headache", "Congestion"])
 
-# Health advice display
+# Function to get health advice from the LLM via Groq API
+def get_health_advice(health_status):
+    client = Groq(api_key=api_key)
+    
+    # Create a Groq chat completion request
+    chat_completion = client.chat.completions.create(
+        messages=[
+            {
+                "role": "user",
+                "content": f"Provide health advice based on the following health status: {health_status}.",
+            }
+        ],
+        model="llama3-8b-8192",
+    )
+
+    return chat_completion.choices[0].message.content.strip()
+
+# Streamlit UI for Health Advice
 st.subheader("Health Advice")
+
 if health_status:
     st.write("**Based on your health status:**")
-    st.write("- Stay indoors as much as possible.")
-    st.write("- Wear a mask if you need to go outside.")
-    st.write("- Use air purifiers if available and drink warm fluids.")
-    if "Severe" in health_status:
-        st.write("Visit a healthcare provider if symptoms worsen.")
+    advice = get_health_advice(", ".join(health_status))  # Joining list into a comma-separated string
+    st.write(advice)
 else:
     st.write("Stay safe! Wear masks, keep windows closed, and avoid outdoor activity if possible.")
 
-# User Suggestions
+# Step 4: Suggestions
 st.subheader("Share Your Suggestions")
 user_name = st.text_input("Your Name")
 suggestion = st.text_area("Share any suggestions or experiences to help improve air quality:")
 
 if st.button("Submit Suggestion"):
     if user_name and suggestion:
-        health_status_str = ", ".join(health_status)
-        sheet.append_row([str(datetime.now()), gender, age_range, city, province, health_status_str, user_name, suggestion])
         st.success("Thank you for your contribution!")
     else:
         st.error("Please fill out your name and suggestion.")
 
-# Health Impact Data Visualization
+# Step 6: Data Visualization
 st.subheader("Health Impact Data")
 age_groups = ["Newborn", "Child", "Teen", "Adult", "Senior"]
-illness_data = [10, 20, 30, 40, 25]  # Replace with actual data as needed
+illness_data = [10, 20, 30, 40, 25]  # Sample data, adjust as per your collected data
 
 fig, ax = plt.subplots()
 ax.bar(age_groups, illness_data, color=['blue', 'green', 'orange', 'red', 'purple'])
