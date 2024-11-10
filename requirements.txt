@@ -2,4 +2,6 @@ streamlit
 gspread 
 oauth2client 
 matplotlib 
-requests
+requests 
+python-dotenv 
+groq
