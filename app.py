@@ -27,58 +27,63 @@ creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(creds)
 sheet = client.open("Pakistan Smog Data").sheet1  # Open your Google Sheet
 
+
 # Define and check column headers
 headers = ["Timestamp", "Gender", "Age Range", "City", "Province", "Health Status", "User Name", "Suggestion"]
-if not sheet.row_values(1):
+if not sheet.row_values(1):  # If the first row is empty, add headers
     sheet.insert_row(headers, 1)
 
-# Streamlit App setup
+# Streamlit App
 st.title("Smog Awareness and Precaution App")
 st.markdown("## How You Can Help Reduce Smog\nReduce vehicle emissions, avoid burning waste, and opt for cleaner energy options to contribute to a healthier environment.")
 
-# Personal Information Input
+# Step 2: User Selection
 st.subheader("Personal Information")
 gender = st.selectbox("Select Gender", ["Male", "Female", "Other"])
-age_range = st.selectbox("Select Age Range", ["0-1 (Newborn)", "2-12 (Child)", "13-19 (Teen)", "20-64 (Adult)", "65+ (Senior)"])
+age_range = st.selectbox(
+    "Select Age Range",
+    ["0-1 (Newborn)", "2-12 (Child)", "13-19 (Teen)", "20-64 (Adult)", "65+ (Senior)"]
+)
 city = st.text_input("City")
 province = st.text_input("Province")
 
-# Health Status Input
+# Step 3: Health Status
 st.subheader("Current Health Status")
 health_status = st.multiselect("Select any symptoms you are experiencing:", ["Illness", "Not Well", "Pain", "Sore Throat", "Watery Eyes", "Cough", "Shortness of Breath", "Fatigue", "Headache", "Congestion"])
 
-# Health Advice with Groq LLM
+# Health advice generation using Groq model
 st.subheader("Health Advice")
-
-def get_health_advice(symptoms):
-    api_key = os.getenv("GROQ_API_KEY")  # Ensure GROQ_API_KEY is set in environment variables
-    url = "https://api.groq.com/openai/v1/models/llama-3.1-8b-instant/completions"
+if health_status:
+    st.write("**Based on your health status:**")
     
-    # Define payload
-    payload = {
-        "prompt": f"Provide health advice for symptoms: {', '.join(symptoms)}",
-        "max_tokens": 50,
-    }
+    # Groq API setup
+    api_key = os.environ.get("GROQ_API_KEY")
+    url = "https://api.groq.com/openai/v1/models"
+
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json"
     }
-    
-    response = requests.post(url, json=payload, headers=headers)
+
+    health_status_str = ", ".join(health_status)
+    payload = {
+        "prompt": f"Provide health advice for someone experiencing the following symptoms: {health_status_str}",
+        "model": "llama-3.1-8b-instant",
+        "max_tokens": 150
+    }
+
+    # Send the request to the Groq API
+    response = requests.post(url, headers=headers, json=payload)
     
     if response.status_code == 200:
-        advice = response.json().get("choices")[0].get("text")
-        return advice
+        advice = response.json().get('choices')[0].get('text')
+        st.write(advice)
     else:
-        return "Error retrieving health advice. Please try again."
-
-if health_status:
-    advice = get_health_advice(health_status)
-    st.write(f"**Based on your health status:** {advice}")
+        st.write("Error: Unable to retrieve advice. Please try again later.")
 else:
     st.write("Stay safe! Wear masks, keep windows closed, and avoid outdoor activity if possible.")
 
-# Suggestions Section
+# Step 4: Suggestions
 st.subheader("Share Your Suggestions")
 user_name = st.text_input("Your Name")
 suggestion = st.text_area("Share any suggestions or experiences to help improve air quality:")
@@ -91,10 +96,10 @@ if st.button("Submit Suggestion"):
     else:
         st.error("Please fill out your name and suggestion.")
 
-# Data Visualization Section
+# Step 6: Data Visualization
 st.subheader("Health Impact Data")
 age_groups = ["Newborn", "Child", "Teen", "Adult", "Senior"]
-illness_data = [10, 20, 30, 40, 25]  # Sample data, replace with actual data
+illness_data = [10, 20, 30, 40, 25]  # Sample data, adjust as per your collected data
 
 fig, ax = plt.subplots()
 ax.bar(age_groups, illness_data, color=['blue', 'green', 'orange', 'red', 'purple'])
