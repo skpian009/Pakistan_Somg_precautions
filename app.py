@@ -5,9 +5,12 @@ from oauth2client.service_account import ServiceAccountCredentials
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-import os
+
+
 import json
+import os
 from google.oauth2 import service_account
+import streamlit as st
 
 
 
@@ -19,12 +22,17 @@ scope = ["https://spreadsheets.google.com/feeds",
          "https://www.googleapis.com/auth/drive.file", 
          "https://www.googleapis.com/auth/drive"]
 
-
 # Load the GCP credentials from the GitHub secret
-gcp_credentials = json.loads(os.getenv("GCP_CREDENTIALS"))
+gcp_credentials_str = os.getenv("GCP_CREDENTIALS")
 
-# Set up credentials using the JSON data
-creds = service_account.Credentials.from_service_account_info(gcp_credentials)
+if gcp_credentials_str is None:
+    st.error("GCP_CREDENTIALS environment variable is not set or accessible.")
+else:
+    # Parse the JSON string into a dictionary
+    gcp_credentials = json.loads(gcp_credentials_str)
+
+    # Set up credentials using the JSON data
+    creds = service_account.Credentials.from_service_account_info(gcp_credentials)
 
 client = gspread.authorize(creds)
 sheet = client.open("Pakistan Smog Data").sheet1  # Your Google Sheet name
