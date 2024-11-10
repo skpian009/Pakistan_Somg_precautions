@@ -1,18 +1,10 @@
 import streamlit as st
-from oauth2client.service_account import ServiceAccountCredentials
 import gspread
-import plotly.express as px
+from oauth2client.service_account import ServiceAccountCredentials
+import matplotlib.pyplot as plt
 from datetime import datetime
-from transformers import pipeline
-
+import requests
 import os
-import json
-from oauth2client.service_account import ServiceAccountCredentials
-import gspread
-import streamlit as st
-
-
-
 
 # Google Sheets setup
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive"]
@@ -35,89 +27,84 @@ creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(creds)
 sheet = client.open("Pakistan Smog Data").sheet1  # Open your Google Sheet
 
-
-# creds = ServiceAccountCredentials.from_json_keyfile_name('smog-441311-19de64d3f26c.json', scope)
-# client = gspread.authorize(creds)
-# sheet = client.open("Pakistan Smog Data").sheet1  # Open your Google Sheet
-
 # Define and check column headers
 headers = ["Timestamp", "Gender", "Age Range", "City", "Province", "Health Status", "User Name", "Suggestion"]
-if not sheet.row_values(1):  # If the first row is empty, add headers
+if not sheet.row_values(1):
     sheet.insert_row(headers, 1)
 
-# Initialize session state for tracking submission counts
-if "submission_data" not in st.session_state:
-    st.session_state["submission_data"] = {"Male": 0, "Female": 0, "Other": 0}
-
-# Load Hugging Face's pre-trained model for health-related advice
-# We will use a text generation model such as GPT-2, fine-tuned for health advice
-# You can use a model like "DialoGPT" for conversational AI, or any other fine-tuned model for medical or health advice
-health_advice_model = pipeline("text-generation", model="microsoft/BioGPT")  # Replace with your preferred model
-
-# Function to generate health advice based on user input
-def get_health_advice(age_range, health_status):
-    # Generate health advice based on age range and health status
-    input_text = f"Provide health advice for a {age_range} with the following health issues: {', '.join(health_status)}"
-    advice = health_advice_model(input_text, max_length=150, num_return_sequences=1)
-    return advice[0]["generated_text"]
-
-# Streamlit App UI
+# Streamlit App setup
 st.title("Smog Awareness and Precaution App")
-st.write("Learn about smog precautions and how you can contribute to reducing smog!")
+st.markdown("## How You Can Help Reduce Smog\nReduce vehicle emissions, avoid burning waste, and opt for cleaner energy options to contribute to a healthier environment.")
 
-# User Input: Personal Information
+# Personal Information Input
 st.subheader("Personal Information")
 gender = st.selectbox("Select Gender", ["Male", "Female", "Other"])
-
-# Age range selection with clear labels
-age_range = st.selectbox(
-    "Select Age Range",
-    ["0-1 (Newborn)", "2-12 (Child)", "13-19 (Teen)", "20-64 (Adult)", "65+ (Senior)"]
-)
-
+age_range = st.selectbox("Select Age Range", ["0-1 (Newborn)", "2-12 (Child)", "13-19 (Teen)", "20-64 (Adult)", "65+ (Senior)"])
 city = st.text_input("City")
 province = st.text_input("Province")
 
-# Health status selection
-health_status = st.multiselect(
-    "Select Current Health Status (select all that apply)",
-    ["Illness", "Cough", "Fatigue", "Sore Throat", "Watery Eyes", "Headache", "Breathing Difficulty", "Chest Pain", "Runny Nose", "Sneezing"]
-)
+# Health Status Input
+st.subheader("Current Health Status")
+health_status = st.multiselect("Select any symptoms you are experiencing:", ["Illness", "Not Well", "Pain", "Sore Throat", "Watery Eyes", "Cough", "Shortness of Breath", "Fatigue", "Headache", "Congestion"])
 
-# Suggestion submission
-user_name = st.text_input("Your Name")
-suggestion = st.text_area("Your Suggestions for Improving Air Quality")
+# Health Advice with Groq LLM
+st.subheader("Health Advice")
 
-# Submit Button
-if st.button("Submit"):
-    # Append data to Google Sheets
-    health_status_str = ", ".join(health_status)
-    sheet.append_row([str(datetime.now()), gender, age_range, city, province, health_status_str, user_name, suggestion])
+def get_health_advice(symptoms):
+    api_key = os.getenv("GROQ_API_KEY")  # Ensure GROQ_API_KEY is set in environment variables
+    url = "https://api.groq.com/openai/v1/models/llama-3.1-8b-instant/completions"
     
-    # Increment the relevant counter in session state
-    st.session_state["submission_data"][gender] += 1
-    st.success("Thank you! Your response has been recorded and the graph is updated.")
+    # Define payload
+    payload = {
+        "prompt": f"Provide health advice for symptoms: {', '.join(symptoms)}",
+        "max_tokens": 50,
+    }
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    
+    response = requests.post(url, json=payload, headers=headers)
+    
+    if response.status_code == 200:
+        advice = response.json().get("choices")[0].get("text")
+        return advice
+    else:
+        return "Error retrieving health advice. Please try again."
 
-    # Provide AI-generated health advice based on user input
-    health_advice = get_health_advice(age_range, health_status)
-    st.subheader("Health Precautions and Advice")
-    st.write(health_advice)
+if health_status:
+    advice = get_health_advice(health_status)
+    st.write(f"**Based on your health status:** {advice}")
+else:
+    st.write("Stay safe! Wear masks, keep windows closed, and avoid outdoor activity if possible.")
 
-# Display interactive, real-time graph using in-memory data
-st.subheader("Health Issues due to Smog - Real-Time Data")
+# Suggestions Section
+st.subheader("Share Your Suggestions")
+user_name = st.text_input("Your Name")
+suggestion = st.text_area("Share any suggestions or experiences to help improve air quality:")
 
-# Convert the in-memory counter data to a format usable by Plotly
-graph_data = [{"Gender": key, "Illness Count": count} for key, count in st.session_state["submission_data"].items()]
+if st.button("Submit Suggestion"):
+    if user_name and suggestion:
+        health_status_str = ", ".join(health_status)
+        sheet.append_row([str(datetime.now()), gender, age_range, city, province, health_status_str, user_name, suggestion])
+        st.success("Thank you for your contribution!")
+    else:
+        st.error("Please fill out your name and suggestion.")
 
-# Create the Plotly graph
-fig = px.bar(
-    graph_data,
-    x="Gender",
-    y="Illness Count",
-    color="Gender",
-    title="Count of Reported Illnesses by Gender due to Smog"
-)
-fig.update_layout(xaxis_title="Gender", yaxis_title="Illness Count", title_x=0.5)
+# Data Visualization Section
+st.subheader("Health Impact Data")
+age_groups = ["Newborn", "Child", "Teen", "Adult", "Senior"]
+illness_data = [10, 20, 30, 40, 25]  # Sample data, replace with actual data
 
-# Display the chart
-st.plotly_chart(fig)
+fig, ax = plt.subplots()
+ax.bar(age_groups, illness_data, color=['blue', 'green', 'orange', 'red', 'purple'])
+ax.set_xlabel("Age Group")
+ax.set_ylabel("Number of People Ill")
+ax.set_title("Health Impact by Age Group Due to Smog")
+st.pyplot(fig)
+
+# Store user data in Google Sheets
+if gender and age_range and health_status:
+    sheet.append_row([str(datetime.now()), gender, age_range, city, province, health_status])
+
+st.write("Data is stored and can be accessed for analysis [here](<Google Sheet link>)")
