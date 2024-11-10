@@ -6,9 +6,6 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 
 
-private_key = """-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqh...END PRIVATE KEY-----\n"""
-
-
 
 
 # Set up credentials using environment variables
