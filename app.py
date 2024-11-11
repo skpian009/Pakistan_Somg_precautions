@@ -4,6 +4,7 @@ from datetime import datetime
 import os
 from dotenv import load_dotenv
 from groq import Groq
+import pandas as pd
 
 # Load environment variables from a .env file
 load_dotenv()
@@ -11,25 +12,50 @@ load_dotenv()
 # Access the API key from environment variables
 api_key = os.getenv("GROQ_API_KEY")
 
+# File to store user data
+DATA_FILE = 'user_data.csv'
+
+# Function to save data
+def save_data():
+    if all([
+        st.session_state.get("gender"),
+        st.session_state.get("age_range"),
+        st.session_state.get("province"),
+        st.session_state.get("health_status")
+    ]):
+        new_data = {
+            "timestamp": [datetime.now()],
+            "gender": [st.session_state.gender],
+            "age_range": [st.session_state.age_range],
+            "province": [st.session_state.province],
+            "symptoms": [", ".join(st.session_state.health_status)]
+        }
+        new_df = pd.DataFrame(new_data)
+
+        # Append to CSV file, creating it if it doesn't exist
+        if os.path.exists(DATA_FILE):
+            new_df.to_csv(DATA_FILE, mode='a', header=False, index=False)
+        else:
+            new_df.to_csv(DATA_FILE, index=False)
+
 # Streamlit App
 st.title("Smog Awareness and Precaution App")
 st.markdown("## How You Can Help Reduce Smog\nReduce vehicle emissions, avoid burning waste, and opt for cleaner energy options to contribute to a healthier environment.")
 
 # Step 2: User Selection
 st.subheader("Personal Information")
-gender = st.selectbox("Select Gender", ["Male", "Female", "Other"])
-age_range = st.selectbox(
-    "Select Age Range",
-    ["0-1 (Newborn)", "2-12 (Child)", "13-19 (Teen)", "20-64 (Adult)", "65+ (Senior)"]
-)
-city = st.text_input("City")
-province = st.text_input("Province")
+
+st.selectbox("Select Gender", ["Male", "Female", "Other"], key="gender", on_change=save_data)
+st.selectbox("Select Age Range", ["0-1 (Newborn)", "2-12 (Child)", "13-19 (Teen)", "20-64 (Adult)", "65+ (Senior)"], key="age_range", on_change=save_data)
+st.text_input("City", key="city", on_change=save_data)
+st.text_input("Province", key="province", on_change=save_data)
 
 # Step 3: Health Status
 st.subheader("Current Health Status")
-health_status = st.multiselect("Select any symptoms you are experiencing:", 
-                               ["Illness", "Not Well", "Pain", "Sore Throat", "Watery Eyes", "Cough", 
-                                "Shortness of Breath", "Fatigue", "Headache", "Congestion"])
+st.multiselect("Select any symptoms you are experiencing:", 
+               ["Illness", "Not Well", "Pain", "Sore Throat", "Watery Eyes", "Cough", 
+                "Shortness of Breath", "Fatigue", "Headache", "Congestion"], 
+               key="health_status", on_change=save_data)
 
 # Function to get health advice from the LLM via Groq API
 def get_health_advice(health_status):
@@ -49,51 +75,33 @@ def get_health_advice(health_status):
 # Streamlit UI for Health Advice
 st.subheader("Health Advice")
 
-if health_status:
+if st.session_state.get("health_status"):
     st.write("**Based on your health status:**")
-    advice = get_health_advice(", ".join(health_status))  # Joining list into a comma-separated string
+    advice = get_health_advice(", ".join(st.session_state.health_status))  # Joining list into a comma-separated string
     st.write(advice)
 else:
     st.write("Stay safe! Wear masks, keep windows closed, and avoid outdoor activity if possible.")
 
-# Step 4: Suggestions
-st.subheader("Share Your Suggestions")
-user_name = st.text_input("Your Name")
-suggestion = st.text_area("Share any suggestions or experiences to help improve air quality:")
+# Step 6: Data Visualization based on Stored Data
+st.subheader("Health Impact Data Based on All User Input")
 
-if st.button("Submit Suggestion"):
-    if user_name and suggestion:
-        st.success("Thank you for your contribution!")
-    else:
-        st.error("Please fill out your name and suggestion.")
+if os.path.exists(DATA_FILE):
+    # Load data
+    df = pd.read_csv(DATA_FILE)
+    
+    # Count occurrences by age group
+    age_group_counts = df.groupby('age_range').size()
 
-# Step 6: Data Visualization based on User Data
+    # Prepare data for the bar chart
+    age_groups = ["0-1 (Newborn)", "2-12 (Child)", "13-19 (Teen)", "20-64 (Adult)", "65+ (Senior)"]
+    illness_counts = [age_group_counts.get(age, 0) for age in age_groups]
 
-# Initialize illness data for each age group
-illness_data = {"Newborn": 0, "Child": 0, "Teen": 0, "Adult": 0, "Senior": 0}
-
-# Map symptoms to corresponding age groups (this is just a sample logic, modify as needed)
-age_group_map = {
-    "0-1 (Newborn)": "Newborn",
-    "2-12 (Child)": "Child",
-    "13-19 (Teen)": "Teen",
-    "20-64 (Adult)": "Adult",
-    "65+ (Senior)": "Senior"
-}
-
-# Increase illness data count based on user age range and symptoms
-if age_range:
-    illness_data[age_group_map[age_range]] += len(health_status)
-
-# Create the bar chart based on user input
-st.subheader("Health Impact Data Based on Your Input")
-
-age_groups = list(illness_data.keys())
-illness_values = list(illness_data.values())
-
-fig, ax = plt.subplots()
-ax.bar(age_groups, illness_values, color=['blue', 'green', 'orange', 'red', 'purple'])
-ax.set_xlabel("Age Group")
-ax.set_ylabel("Number of People Ill")
-ax.set_title("Health Impact by Age Group Due to Smog")
-st.pyplot(fig)
+    # Plot cumulative data
+    fig, ax = plt.subplots()
+    ax.bar(age_groups, illness_counts, color=['blue', 'green', 'orange', 'red', 'purple'])
+    ax.set_xlabel("Age Group")
+    ax.set_ylabel("Number of Ill People")
+    ax.set_title("Cumulative Health Impact by Age Group Due to Smog")
+    st.pyplot(fig)
+else:
+    st.write("No data available yet.")
