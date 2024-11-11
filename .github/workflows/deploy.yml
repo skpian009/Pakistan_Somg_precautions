@@ -3,26 +3,32 @@ name: Deploy Application
 on:
   push:
     branches:
-      - main  # This will trigger the action on every push to the 'main' branch
+      - main
 
 jobs:
-  build:
-    runs-on: ubuntu-latest  # This defines the environment to run on (Linux-based runner)
+  deploy:
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2  # This checks out your code so you can work with it
+        uses: actions/checkout@v2
 
-      - name: Set up environment variable for GROQ
-        run: echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> .env  # This writes the secret into the .env file
-
-      - name: Display .env content (for debugging)
-        run: cat .env  # Optional, useful for debugging to ensure the secret was added
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt  # Install Python dependencies, adjust if needed
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-      - name: Run the application (example for Python)
+      - name: Deploy application with GROQ API Key
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
-          python app.py  # Replace with your actual application command
+          # Export the key to make it available in the app's environment
+          export GROQ_API_KEY="${{ secrets.GROQ_API_KEY }}"
+          
+          # Run your deployment command here
+          streamlit run app.py
