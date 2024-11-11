@@ -113,7 +113,7 @@ else:
 import pandas as pd
 import os
 
-secret_code = os.getenv("DOWNLOAD_SECRET_CODE")
+secret_code = os.getenv("SECRET_CODE")
 
 # Prompt the user for a secret code
 user_input = st.text_input("Enter the secret code to download user data:", type="password")
