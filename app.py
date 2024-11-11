@@ -105,3 +105,29 @@ if os.path.exists(DATA_FILE):
     st.pyplot(fig)
 else:
     st.write("No data available yet.")
+
+
+
+
+# Code to access/download data securely
+import pandas as pd
+import os
+
+secret_code = os.getenv("DOWNLOAD_SECRET_CODE")
+
+# Prompt the user for a secret code
+user_input = st.text_input("Enter the secret code to download user data:", type="password")
+
+if user_input == secret_code:
+    st.success("Access granted")
+    # Show download button if CSV file exists
+    if os.path.exists("user_data.csv"):
+        with open("user_data.csv", "rb") as file:
+            st.download_button(
+                label="Download User Data",
+                data=file,
+                file_name="user_data.csv",
+                mime="text/csv"
+            )
+elif user_input:
+    st.error("Access denied")
