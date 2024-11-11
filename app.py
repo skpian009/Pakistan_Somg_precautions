@@ -109,11 +109,15 @@ else:
 
 
 
-# Code to access/download data securely
 import pandas as pd
+import streamlit as st
 import os
 
-secret_code = os.getenv("SECRET_CODE")
+# Access the secret code from GitHub Secrets (environment variable)
+secret_code = os.getenv("DOWNLOAD_SECRET_CODE")
+
+# Temporary debug output (remember to remove after confirming)
+st.write("Debug Secret Code:", secret_code)
 
 # Prompt the user for a secret code
 user_input = st.text_input("Enter the secret code to download user data:", type="password")
@@ -131,3 +135,4 @@ if user_input == secret_code:
             )
 elif user_input:
     st.error("Access denied")
+
