@@ -1,0 +1,29 @@
+name: Deploy Application
+
+on:
+  push:
+    branches:
+      - main  # This will trigger the action on every push to the 'main' branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # This defines the environment to run on (Linux-based runner)
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2  # This checks out your code so you can work with it
+
+      - name: Set up environment variable for GROQ
+        run: echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> .env  # This writes the secret into the .env file
+
+      - name: Display .env content (for debugging)
+        run: cat .env  # This step prints the .env file to verify the secret was added (optional, but useful for debugging)
+
+      - name: Install dependencies (example for Node.js)
+        run: |
+          npm install  # This step installs dependencies (adjust if you're using another stack)
+
+      - name: Build and deploy (example for Node.js)
+        run: |
+          npm run build
+          npm run deploy  # Add your build and deploy steps here
