@@ -112,7 +112,7 @@ else:
 import pandas as pd
 import streamlit as st
 import os
-
+st.write(f"File exists: {os.path.exists(DATA_FILE)}")
 # Access the secret code from GitHub Secrets (environment variable)
 secret_code = os.getenv("DOWNLOAD_SECRET_CODE")
 
