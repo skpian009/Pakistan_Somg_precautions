@@ -39,12 +39,13 @@ def save_data():
             new_df.to_csv(DATA_FILE, index=False)
 
 
-if os.path.exists(DATA_FILE):
-    df = pd.read_csv(DATA_FILE)
-    st.write("User Data:", df)
+#if os.path.exists(DATA_FILE):
+ #   df = pd.read_csv(DATA_FILE)
+  #  st.write("User Data:", df)
 
 # Streamlit App
 st.title("Smog Awareness and Precaution App")
+st.markdown("This App will share necessary precuations as per your current health Status due to Smog")
 st.markdown("## How You Can Help Reduce Smog\nReduce vehicle emissions, avoid burning waste, and opt for cleaner energy options to contribute to a healthier environment.")
 
 # Step 2: User Selection
@@ -114,9 +115,7 @@ else:
 
 
 
-import pandas as pd
-import streamlit as st
-import os
+
 #st.write(f"File exists: {os.path.exists(DATA_FILE)}")
 # Access the secret code from GitHub Secrets (environment variable)
 load_dotenv()
