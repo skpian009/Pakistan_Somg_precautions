@@ -118,16 +118,16 @@ else:
 
 #st.write(f"File exists: {os.path.exists(DATA_FILE)}")
 
-# load_dotenv()
-# secret_code = os.getenv("CODE1")
+ load_dotenv()
+ secret_code = os.getenv("CODE1")
 # Temporary debug output (remember to remove after confirming)
 #st.write("Debug Secret Code:", secret_code)
 
 
 # Access the secret code from GitHub Secrets (environment variable)
 #st.write(st.secrets)
-secret_code = st.secrets["CODE1"]  # Access directly from st.secrets
-st.write("Secret Code (for debugging):", secret_code)
+#secret_code = st.secrets["CODE1"]  # Access directly from st.secrets
+#st.write("Secret Code (for debugging):", secret_code)
 
 
 
