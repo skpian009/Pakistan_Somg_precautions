@@ -122,7 +122,7 @@ st.write(f"File exists: {os.path.exists(DATA_FILE)}")
 secret_code = os.getenv("DOWNLOAD_SECRET_CODE")
 
 # Temporary debug output (remember to remove after confirming)
-# st.write("Debug Secret Code:", secret_code)
+st.write("Debug Secret Code:", secret_code)
 
 # Prompt the user for a secret code
 user_input = st.text_input("Enter the secret code to download user data:", type="password")
