@@ -117,18 +117,22 @@ else:
 
 
 #st.write(f"File exists: {os.path.exists(DATA_FILE)}")
-# Access the secret code from GitHub Secrets (environment variable)
-load_dotenv()
-secret_code = os.getenv("CODE1")
-st.write(st.secrets)
-#secret_code = st.secrets["CODE1"]  # Access directly from st.secrets
-#st.write("Secret Code (for debugging):", secret_code)
 
+# load_dotenv()
+# secret_code = os.getenv("CODE1")
 # Temporary debug output (remember to remove after confirming)
 #st.write("Debug Secret Code:", secret_code)
 
+
+# Access the secret code from GitHub Secrets (environment variable)
+#st.write(st.secrets)
+secret_code = st.secrets["CODE1"]  # Access directly from st.secrets
+st.write("Secret Code (for debugging):", secret_code)
+
+
+
 # Prompt the user for a secret code
-user_input = st.text_input("Enter the secret code to download user data:", type="password")
+user_input = st.text_input("Enter the secret code to download user data:")
 
 if user_input == secret_code:
     st.success("Access granted")
