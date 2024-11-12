@@ -38,6 +38,11 @@ def save_data():
         else:
             new_df.to_csv(DATA_FILE, index=False)
 
+
+if os.path.exists(DATA_FILE):
+    df = pd.read_csv(DATA_FILE)
+    st.write("User Data:", df)
+
 # Streamlit App
 st.title("Smog Awareness and Precaution App")
 st.markdown("## How You Can Help Reduce Smog\nReduce vehicle emissions, avoid burning waste, and opt for cleaner energy options to contribute to a healthier environment.")
