@@ -117,12 +117,13 @@ else:
 import pandas as pd
 import streamlit as st
 import os
-st.write(f"File exists: {os.path.exists(DATA_FILE)}")
+#st.write(f"File exists: {os.path.exists(DATA_FILE)}")
 # Access the secret code from GitHub Secrets (environment variable)
+load_dotenv()
 secret_code = os.getenv("DOWNLOAD_SECRET_CODE")
 
 # Temporary debug output (remember to remove after confirming)
-st.write("Debug Secret Code:", secret_code)
+#st.write("Debug Secret Code:", secret_code)
 
 # Prompt the user for a secret code
 user_input = st.text_input("Enter the secret code to download user data:", type="password")
